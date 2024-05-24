@@ -286,7 +286,7 @@ def sendChirpToEar(*,AmpChirp=0.01,fsamp=44100,MicGain=40,Nchirps=300,buffersize
     Hinear2 = ChRespI2/(0.003*10**(MicGain/20))
 
     fxinear = fx
-    return plt, Hinear1, Hinear2, fxinear, y_mean1, y_mean2
+    return Hinear1, Hinear2, fxinear, y_mean1, y_mean2
 
 
 
@@ -343,9 +343,9 @@ def roexwin(N,n,fs,tc1,tc2):
 
 def fceDPOAEinwinSSNoise(oaeDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tau02,tshift):
     '''
-    % function [Hm, fx, hm, tx, hmnoise] = fceDPOAEinwinSS(oaeDS,Npts,f1s,L1sw,rF,fsD,tau01,tau02,tshift)
+    % function [Hm, fx, hm, tx, hmnoise] = fceDPOAEinwinSSNoise(oaeDS,Npts,f1s,L1sw,rF,fsD,tau01,tau02,tshift)
     %
-    % calculates DPOAE with SSS technique
+    % calculates Noise floor with SSS technique
     % 
     % oaeDS - time domain signal from which DPOAE is extracted (response to
     % swept sines in the ear canal)
@@ -388,26 +388,13 @@ def fceDPOAEinwinSSNoise(oaeDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tau02,tshift):
         hm = h[dt_-len_IRpul:dt_+len_IRpul]
     else:  # downward sweep
         hm = h[len(h)+dt_-len_IRpul:len(h)+dt_+len_IRpul]
-    #fig,ax = plt.subplots()
-    #ax.plot(hm)
-    #print(len(S))
-    #print(len(hm))
-    #print(len(h))
-    #print(dt_-len_IRpul+1)
-    #print(dt_+len_IRpul+1)
-    #from scipy.io import savemat
-    #data = {'hm':hm}
-    #savemat('hms015python.mat',data)
+   
     
     axe_w = np.linspace(0,np.pi,len_IRpul+1,endpoint=False)
 
     # Non-integer sample delay correction
     Hx = np.fft.rfft(hm) * np.exp(-1j*dt_rem*axe_w)
     hm = np.fft.irfft(Hx)
-    
-    #from scipy.io import savemat
-    #data = {'hm':hm}
-    #savemat('hms015python.mat',data)
     
     # apply roex windows to suppress noise and perform component separation
     Nwindow = 10 # degree of roex windows
@@ -591,11 +578,11 @@ def calcDPgramFAV_HS(oaeDS,nfloorDS,f2f1,f2b,f2e,fsamp,octpersec,GainMic):
     
         
     for k in range(len(fdpc)):  # estimate for individual roex windows
-        Hm[:,k], fxfdp = fceDPOAEinwinSS(oaeDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauAll[k],tshift,hmfftlen)
+        Hm[:,k], fxfdp = fceDPOAEinwinSS(oaeDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauAll[k],tshift)
         #print(np.isnan(Hm))
-        HmNL[:,k], fxfdpNL = fceDPOAEinwinSS(oaeDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauNL[k],tshift,hmfftlen)
-        HmNoise[:,k], fxfdp = fceDPOAEinwinSSNoise(nfloorDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauAll[k],tshift,hmfftlen)
-        HmNoiseNL[:,k], fxfdpNL = fceDPOAEinwinSSNoise(nfloorDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauNL[k],tshift,hmfftlen)
+        HmNL[:,k], fxfdpNL = fceDPOAEinwinSS(oaeDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauNL[k],tshift)
+        HmNoise[:,k], fxfdp = fceDPOAEinwinSSNoise(nfloorDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauAll[k],tshift)
+        HmNoiseNL[:,k], fxfdpNL = fceDPOAEinwinSSNoise(nfloorDS,Nsamp,f1s,L1sw,rF,fsamp,tau01,tauNL[k],tshift)
         # make a matrix with NaNs in the respective parts of the responses, i.e. for specific rows in Hm
         # the matrix will then be used to combine Hm and HmNL such that we
         # use concerete roex windows for concrete frequency ranges. This

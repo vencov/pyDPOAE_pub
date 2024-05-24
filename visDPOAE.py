@@ -16,13 +16,14 @@ import matplotlib.pyplot as plt
 import UserModules.pyDPOAEmodule as pDP
     
 
-# for s056
-path = "Results/s039/"
-subj_name = 's039'
+
+path = "Results/s083/"
+subj_name = 's083'
 
 # left ear
+# p4swDPOAE_s083_24_03_26_14_45_37_F2b_8000HzF2a_500HzL1_65dB_L2_65dB_f2f1_120.0_Oct_20_L_01 # file name
 ear = 'left'
-deL = '24_02_14_14_13_59' # sequence of date and time from the result file to extract all files for one session
+deL = '24_03_26_14_45_37' # sequence of date and time from the result file to extract all files for one session
 
 
 
@@ -31,7 +32,7 @@ f2f1 = 1.2
 fsamp = 96000;
 
 
-def getDPgram(path,DatePat,fsamp,lat,r):
+def getDPgram(path,DatePat,fsamp,r):
 
     dir_list = os.listdir(path)
     
@@ -172,5 +173,50 @@ def getDPgram(path,DatePat,fsamp,lat,r):
     
     return DPgram, DPgramNL, DPgramCR, NF, NFnl, fx
 
+r = 2 # sweep rate (oct/sec)
+DPgram, DPgramNL, DPgramCR, NF, NFnl, fx = getDPgram(path,deL,fsamp ,r)
+
+f2x = f2f1*fx/(2-f2f1)
+
+f2min = 500
+f2max = 8000
+fig,(ax1,ax2) = plt.subplots(2,1)
+
+LWv = np.linspace(1,1,9)
+
+cycle = np.pi*2 
+#ax1.plot(fx,20*np.log10(np.abs(DPgram[:,-1])/(np.sqrt(2)*2e-5)))
+ax1.plot(f2x,20*np.log10(np.abs(DPgram)/(np.sqrt(2)*2e-5)),color='C0',linewidth=LWv[0])
+ax1.plot(f2x,20*np.log10(np.abs(DPgramNL)/(np.sqrt(2)*2e-5)),color='C1',linewidth=LWv[0])
+ax1.plot(f2x,20*np.log10(np.abs(DPgramCR)/(np.sqrt(2)*2e-5)),color='C2',linewidth=LWv[0])
+ax1.plot(f2x,20*np.log10(np.abs(NF)/(np.sqrt(2)*2e-5)),linestyle=':',color='C0',linewidth=LWv[0])
+ax1.plot(f2x,20*np.log10(np.abs(NFnl)/(np.sqrt(2)*2e-5)),linestyle=':',color='C1',linewidth=LWv[0])
+
+ax1.set_xlim([f2min,f2max])
+ax1.set_ylim([-40,30])
+ax1.set_ylabel('Amplitude (dB SPL)')
+ax1.set_title('DP-gram for scissor paradigm, '+ subj_name + ', ' + ear + ' ear')
+ax1.legend(('DPOAE','DPOAE SL','DPOAE LL','N. floor DPOAE','N. floor DPOAE SL'))
+#ax1.legend(('DPOAE','NL comp.','CR comp.','noise floor'))
+DPphaseU = np.copy(np.angle(DPgram)[~np.isnan(DPgram)])
+DPphaseU = np.unwrap(DPphaseU)
+
+DPphaseNLU = np.copy(np.angle(DPgramNL)[~np.isnan(DPgramNL)])
+DPphaseNLU = np.unwrap(DPphaseNLU)
+
+DPphaseCRU = np.copy(np.angle(DPgramCR)[~np.isnan(DPgramCR)])
+DPphaseCRU = np.unwrap((DPphaseCRU))
 
 
+ax2.plot(f2x[~np.isnan(DPgram)],DPphaseU/cycle,color='C0',linewidth=LWv[1])
+ax2.plot(f2x[~np.isnan(DPgramNL)],DPphaseNLU/cycle,color='C1',linewidth=LWv[1])
+ax2.plot(f2x[~np.isnan(DPgram)],DPphaseCRU/cycle,color='C2',linewidth=LWv[1])
+
+
+#ax2.plot(fx,np.unwrap(np.angle(DPgramNL))/cycle)
+#ax2.plot(fx,np.unwrap(np.angle(DPgramCR))/cycle)
+ax2.set_xlim([f2min,f2max])
+ax2.set_ylim([-40,10])
+ax2.set_xlabel('Frequency $f_2$ (Hz)')
+ax2.set_ylabel('Phase (cycles)')
+plt.show()
